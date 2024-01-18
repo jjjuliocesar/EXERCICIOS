@@ -1,0 +1,160 @@
+<?php
+$servername = "localhost";
+$username = "seu_usuario";
+$password = "sua_senha";
+$dbname = "projeto_final"; // Alterado o nome do banco de dados
+
+// Resto do código permanece o mesmo...
+
+// Criar conexão
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Checar conexão
+if ($conn->connect_error) {
+    die("Conexão falhou: " . $conn->connect_error);
+}
+
+// Função para inserir um currículo
+function inserirCurriculo($nome, $email, $educacao, $experiencia, $habilidades) {
+    global $conn;
+    $sql = "INSERT INTO curriculos (nome, email, educacao, experiencia, habilidades)
+            VALUES ('$nome', '$email', '$educacao', '$experiencia', '$habilidades')";
+    if ($conn->query($sql) === TRUE) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Função para buscar todos os currículos
+function buscarCurriculos() {
+    global $conn;
+    $sql = "SELECT id, nome, email FROM curriculos";
+    $result = $conn->query($sql);
+    if ($result->num_rows > 0) {
+        $curriculos = array();
+        while($row = $result->fetch_assoc()) {
+            $curriculos[] = $row;
+        }
+        return $curriculos;
+    } else {
+        return array();
+    }
+}
+
+// Função para buscar um currículo por ID
+function buscarCurriculoPorID($id) {
+    global $conn;
+    $sql = "SELECT * FROM curriculos WHERE id = $id";
+    $result = $conn->query($sql);
+    if ($result->num_rows == 1) {
+        return $result->fetch_assoc();
+    } else {
+        return null;
+    }
+}
+
+// Função para atualizar um currículo
+function atualizarCurriculo($id, $nome, $email, $educacao, $experiencia, $habilidades) {
+    global $conn;
+    $sql = "UPDATE curriculos SET nome='$nome', email='$email', educacao='$educacao', experiencia='$experiencia', habilidades='$habilidades' WHERE id=$id";
+    if ($conn->query($sql) === TRUE) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Função para excluir um currículo
+function excluirCurriculo($id) {
+    global $conn;
+    $sql = "DELETE FROM curriculos WHERE id = $id";
+    if ($conn->query($sql) === TRUE) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Manipulação de requisições
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST["inserir"])) {
+        $nome = $_POST['nome'];
+        $email = $_POST['email'];
+        $educacao = $_POST['educacao'];
+        $experiencia = $_POST['experiencia'];
+        $habilidades = $_POST['habilidades'];
+
+        if (inserirCurriculo($nome, $email, $educacao, $experiencia, $habilidades)) {
+            echo "Currículo inserido com sucesso!";
+        } else {
+            echo "Erro ao inserir o currículo.";
+        }
+    } elseif (isset($_POST["atualizar"])) {
+        $id = $_POST['id'];
+        $nome = $_POST['nome'];
+        $email = $_POST['email'];
+        $educacao = $_POST['educacao'];
+        $experiencia = $_POST['experiencia'];
+        $habilidades = $_POST['habilidades'];
+
+        if (atualizarCurriculo($id, $nome, $email, $educacao, $experiencia, $habilidades)) {
+            echo "Currículo atualizado com sucesso!";
+        } else {
+            echo "Erro ao atualizar o currículo.";
+        }
+    }
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET["acao"])) {
+    if ($_GET["acao"] == "excluir" && isset($_GET["id"])) {
+        $id = $_GET["id"];
+        if (excluirCurriculo($id)) {
+            echo "Currículo excluído com sucesso!";
+        } else {
+            echo "Erro ao excluir o currículo.";
+        }
+    }
+}
+
+// Exibir currículos
+$curriculos = buscarCurriculos();
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Currículos</title>
+</head>
+<body>
+    <h1>Currículos</h1>
+    <table border="1">
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Ações</th>
+        </tr>
+        <?php foreach ($curriculos as $curriculo) { ?>
+            <tr>
+                <td><?php echo $curriculo["nome"]; ?></td>
+                <td><?php echo $curriculo["email"]; ?></td>
+                <td>
+                    <a href="?acao=excluir&id=<?php echo $curriculo["id"]; ?>">Excluir</a> |
+                    <a href="editar.php?id=<?php echo $curriculo["id"]; ?>">Editar</a>
+                </td>
+            </tr>
+        <?php } ?>
+    </table>
+
+    <h2>Inserir Novo Currículo</h2>
+    <form method="post" action="<?php echo $_SERVER['PHP_SELF'];?>">
+        Nome: <input type="text" name="nome"><br>
+        Email: <input type="email" name="email"><br>
+        Educação: <textarea name="educacao"></textarea><br>
+        Experiência: <textarea name="experiencia"></textarea><br>
+        Habilidades: <textarea name="habilidades"></textarea><br>
+        <input type="submit" name="inserir" value="Inserir">
+    </form>
+</body>
+
+</html>
